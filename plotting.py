@@ -26,6 +26,8 @@ def plot_approximation_ulp_error(approximation_funcs, xrange, golden_function, d
     sns.set_style("whitegrid")
     sns.set_context("paper")
 
+    torch_dtype = getattr(torch, dtype)
+
     # Create figure and axis
     fig, ax = plt.subplots(figsize=(12, 8))
 
@@ -34,7 +36,7 @@ def plot_approximation_ulp_error(approximation_funcs, xrange, golden_function, d
     x_values = np.linspace(xmin, xmax, npoints)
 
     # Compute golden values once
-    golden_values = torch.tensor([golden_function(x) for x in x_values], dtype=torch.float64)
+    golden_values = torch.tensor([golden_function(x) for x in x_values], dtype=torch.float64) # Keep as float64 for fractional ULP error calculation
 
     # Prepare data for seaborn plotting
     colors = sns.color_palette("husl", len(approximation_funcs))
@@ -42,7 +44,7 @@ def plot_approximation_ulp_error(approximation_funcs, xrange, golden_function, d
     all_approx_data = []
     for i, (name, approx_func) in enumerate(approximation_funcs.items()):
         # Compute approximation values
-        approx_values = torch.tensor([approx_func(x) for x in x_values], dtype=dtype)
+        approx_values = torch.tensor([approx_func(x) for x in x_values], dtype=torch_dtype)
 
         # Compute ULP errors for each point
         ulp_errors = ulp_delta(approx_values, golden_values).numpy()

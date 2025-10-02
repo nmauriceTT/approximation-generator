@@ -1,18 +1,16 @@
 import torch
 import numpy as np
 from scipy.optimize import minimize, minimize_scalar
-from utility import ulp_delta, worst_ulp_delta
+from utility import ulp_delta, worst_ulp_delta, compare_ulp_error
 
 
-def build_polynomial_approx_chebyshev(fun, poly_rank, xmin, xmax, npoints, dtype="float32"):
 
+def generate_poly_chebyshev(fun, poly_rank, xmin, xmax, npoints, dtype="float32"):
     np_dtype = getattr(np, dtype)
 
     npoints = 1000
     np_inputs = np.linspace(xmin, xmax, npoints)
     np_outputs = np.vectorize(fun)(np_inputs)
-
-    print(f"===== fun: {fun}")
 
     if dtype == "float32":
         eps = 1.1920928955078125e-07
@@ -29,18 +27,10 @@ def build_polynomial_approx_chebyshev(fun, poly_rank, xmin, xmax, npoints, dtype
     chebyshev_coeffs = np.polynomial.chebyshev.chebfit(np_inputs, np_outputs, poly_rank, rcond=rcond)
     coeffs = np.flip(np.polynomial.chebyshev.cheb2poly(chebyshev_coeffs))
 
-    test_inputs = np.linspace(xmin, xmax, 10)
-    cheby_result = np.polynomial.chebyshev.chebval(test_inputs, chebyshev_coeffs)
-    result = np.polyval(coeffs, test_inputs)
-    print(f"  coeffs: {coeffs}")
-    print(f"  test_inputs: {test_inputs}")
-    print(f"  np.polyval: {result}")
-    print(f"  np.polynomial.chebyshev.chebval: {cheby_result}")
-
     return coeffs.astype(np_dtype).tolist()
 
 
-def build_polynomial_approx(fun, poly_rank, xmin, xmax, npoints, dtype="float32", minimize_method='BFGS'):
+def generate_polynomial_approx(fun, poly_rank, xmin, xmax, npoints, dtype="float32", minimize_method='BFGS'):
     """
     Build a polynomial approximation of a function using least squares optimization.
 
@@ -96,48 +86,34 @@ def build_polynomial_approx(fun, poly_rank, xmin, xmax, npoints, dtype="float32"
     initial_guess = np.linalg.lstsq(A, np_y_golden_points, rcond=None)[0]
 
     # Minimize the maximum relative error
-    result = minimize_scalar(objective_ulp, initial_guess, method=minimize_method)
+    result = minimize(objective_ulp, initial_guess)
 
     return result.x.tolist()
 
 
-def compare_ulp_error(fun, coeffs, xmin, xmax, npoints, dtype=torch.float32):
-    """
-    Compare ULP error of polynomial approximation against the golden function.
-
-    Args:
-        fun: The golden function
-        coeffs: Polynomial coefficients from build_polynomial_approx
-        xmin: Minimum input value of the range
-        xmax: Maximum input value of the range
-        npoints: Number of test points
-
-    Returns:
-        Maximum ULP delta across the test points
-    """
-    # Generate test points
-    x_points = np.linspace(xmin, xmax, npoints)
-
-    # Compute golden values
-    golden_values = torch.tensor([fun(x) for x in x_points], dtype=torch.float64)
-
-    # Compute polynomial approximation values
-    approx_values = torch.tensor(np.polyval(coeffs, x_points), dtype=dtype).to(dtype)
-
-    # Compute worst ULP delta
-    return worst_ulp_delta(approx_values, golden_values)
+def generate_function_from_poly(coeffs):
+    return lambda x: np.polyval(coeffs, x)
 
 
-def generate_polynomial_approx(fun, poly_rank, xrange, npoints, dtype="float32", minimize_method='BFGS'):
+def generate_approximations(fun, max_poly_rank, xrange, npoints, function_name="", dtype="float32"):
 
     xmin, xmax = xrange
 
+    functions = {}
+
+    # Numpy does not support bfloat16, so we use float32 instead as fallback
+    if dtype == "bfloat16":
+        dtype = "float32"
+
     # Test with exponential function
-    coeffs = build_polynomial_approx_chebyshev(fun, poly_rank, xmin, xmax, npoints, dtype="float32")
-    print(f"rank {poly_rank} - Polynomial coefficients: {coeffs}")
+    for poly_rank in range(1, max_poly_rank + 1):
+        # Generate Chebyshev polynomial coefficients for given rank
+        cheby_coeffs = generate_poly_chebyshev(fun, poly_rank, xmin, xmax, npoints, dtype=dtype)
+        cheby_fun = generate_function_from_poly(cheby_coeffs)
+        functions[f'{function_name}-Chebyshev[{poly_rank}]'] = cheby_fun
 
-    # Test ULP error
-    ulp_error = compare_ulp_error(fun, coeffs, xmin, xmax, npoints)
-    print(f"    Maximum ULP error: {ulp_error}")
+        polynomial_coeffs = generate_polynomial_approx(fun, poly_rank, xmin, xmax, npoints, dtype=dtype, minimize_method='BFGS')
+        poly_fun = generate_function_from_poly(polynomial_coeffs)
+        functions[f'{function_name}-Minimize[{poly_rank}]'] = poly_fun
 
-    return coeffs
+    return functions

@@ -1,48 +1,25 @@
-import torch
 import math
-import numpy as np
 import os
 
-from approximation import generate_polynomial_approx
+from approximation import generate_approximations
 from plotting import plot_approximation, plot_approximation_ulp_error
 
-def generate_approximations(fun, fun_name, npoints, xrange, dtype, approx_plot_params={}, ulp_error_plot_params={}):
 
-    print(f"Generating approximations for {fun_name} on {xrange} with {npoints} points and {dtype} dtype")
 
-    # Build approximations with different ranks
-    ranks = [2, 4, 6, 8]
 
-    coeffs = [generate_polynomial_approx(fun, poly_rank=rank, xrange=xrange, npoints=npoints, dtype=dtype, minimize_method='BFGS') for rank in ranks]
 
-    # Build dictionary of approximation functions for plotting
-    approximation_funcs = {}
-    for rank, coeff in zip(ranks, coeffs):
-        approximation_funcs[f'Rank {rank}'] = lambda x, c=coeff: np.polyval(c, x)
-
-    # Plot the approximations
-    # plot_approximation(
-    #     approximation_funcs=approximation_funcs,
-    #     xrange=xrange,
-    #     golden_function=fun,
-    #     filename=f"{fun_name}_approximation.pdf",
-    #     plot_params=approx_plot_params
-    # )
+def generate_and_plots(fun, npoints, xrange, dtype, fun_name, approx_plot_params={}, ulp_error_plot_params={}, extra_approximations={}):
 
     output_dir = "plots/"    
     os.makedirs(output_dir, exist_ok=True)
 
-    # Plot ULP error scatter plot
-    plot_approximation_ulp_error(
-        approximation_funcs=approximation_funcs,
-        xrange=xrange,
-        golden_function=fun,
-        dtype=dtype,
-        filename=f"{output_dir}/{fun_name}_ulp_error.pdf",
-        plot_params=ulp_error_plot_params
-    )
+    approx_functions = generate_approximations(fun, max_poly_rank=8, xrange=xrange, npoints=npoints, function_name=fun_name, dtype=dtype)
+    approx_functions.update(extra_approximations)
 
-    print()
+    plot_approximation_ulp_error(approx_functions, xrange, fun, dtype, filename=f"{output_dir}/{fun_name}[{dtype}]_ulp_error.pdf", plot_params=ulp_error_plot_params)
+
+
+
 
 # Example usage and testing
 if __name__ == "__main__":
@@ -51,16 +28,24 @@ if __name__ == "__main__":
     
     npoints = 10
 
-    generate_approximations(math.exp, "exp[bfloat16]", npoints, (0, 1), torch.bfloat16, approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 20)})
-    generate_approximations(math.atan, "atan[bfloat16]", npoints, (-10, 10), torch.bfloat16, approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 40)})
-    generate_approximations(math.asin, "asin[bfloat16]", npoints, (0, 1), torch.bfloat16, approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 40)})
-    generate_approximations(lambda x: math.pow(2, x), "exp2[bfloat16]", npoints, (0, 1), torch.bfloat16, approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 10)})
-    generate_approximations(lambda x: math.log(x + 1), "log1p[bfloat16]", npoints, (0, 10), torch.bfloat16, approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 10)})
-    
+    tanh_approximations = {
+        "tanh-exp": lambda x: (math.exp(x) - math.exp(-x)) / (math.exp(x) + math.exp(-x)),
+        "tanh-exp2": lambda x: (2**(x / math.log(2)) - 2**(-x / math.log(2))) / (2**(x / math.log(2)) + 2**(-x / math.log(2))),
+    }
 
-    generate_approximations(math.exp, "exp", npoints, (0, 1), torch.float32, approx_plot_params={}, ulp_error_plot_params={})
-    generate_approximations(math.atan, "atan", npoints, (-10, 10), torch.float32, approx_plot_params={}, ulp_error_plot_params={})
-    generate_approximations(math.asin, "asin", npoints, (-1, 1), torch.float32, approx_plot_params={}, ulp_error_plot_params={})
-    generate_approximations(lambda x: math.pow(2, x), "exp2", npoints, (0, 1), torch.float32, approx_plot_params={}, ulp_error_plot_params={})
-    generate_approximations(lambda x: math.log(x + 1), "log1p", npoints, (0, 10), torch.float32, approx_plot_params={}, ulp_error_plot_params={})
 
+
+    generate_and_plots(math.exp, npoints, (0, 1), "bfloat16", "exp", approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 20)})
+    generate_and_plots(math.atan, npoints, (-10, 10), "bfloat16", "atan", approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 40)})
+    generate_and_plots(math.asin, npoints, (0, 1), "bfloat16", "asin", approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 40)})
+    generate_and_plots(lambda x: math.pow(2, x), npoints, (0, 1), "bfloat16", "exp2", approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 10)})
+    generate_and_plots(lambda x: math.log(x + 1), npoints, (0, 10), "bfloat16", "log1p", approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 10)})
+    generate_and_plots(lambda x: math.log(x + 1), npoints, (0, 10), "bfloat16", "log1p", approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 100)})
+    generate_and_plots(math.tanh, npoints, (0, 10), "bfloat16", "tanh", approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 100)}, extra_approximations=tanh_approximations)
+
+    generate_and_plots(math.exp, npoints, (0, 1), "float32", "exp", approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 1000)})
+    generate_and_plots(math.atan, npoints, (-10, 10), "float32", "atan", approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 1000)})
+    generate_and_plots(math.asin, npoints, (0, 1), "float32", "asin", approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 1000)})
+    generate_and_plots(lambda x: math.pow(2, x), npoints, (0, 1), "float32", "exp2", approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 1000)})
+    generate_and_plots(lambda x: math.log(x + 1), npoints, (0, 10), "float32", "log1p", approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 1000)})
+    generate_and_plots(math.tanh, npoints, (0, 10), "float32", "tanh", approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 1000)}, extra_approximations=tanh_approximations)
