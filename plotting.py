@@ -48,7 +48,7 @@ def plot_approximation_ulp_error(approximation_funcs, xrange, golden_function, d
 
         # Compute ULP errors for each point
         ulp_errors = ulp_delta(approx_values, golden_values).numpy()
-        print(f"ulp_errors: {ulp_errors}")
+        # print(f"ulp_errors: {ulp_errors}")
 
         max_ulp_error = np.max(ulp_errors)
 
@@ -66,8 +66,7 @@ def plot_approximation_ulp_error(approximation_funcs, xrange, golden_function, d
 
     # Convert to DataFrame for seaborn
     df = pd.concat(all_approx_data, axis=0)
-    print(f"df: \n{df}")
-
+    
     # Create scatter plot using seaborn
     ax = sns.scatterplot(data=df, x='x', y='ulp_error', hue='approximation',
                         alpha=1, s=10, ax=ax)
@@ -87,14 +86,12 @@ def plot_approximation_ulp_error(approximation_funcs, xrange, golden_function, d
 
     # Save as PDF
     fig.tight_layout()
-    fig.savefig(filename, format='pdf', bbox_inches='tight', dpi=300)
-    fig.savefig(filename.replace('.pdf', '.png'), format='png', bbox_inches='tight', dpi=300)
+    fig.savefig(f"{filename}.png", format='png', bbox_inches='tight', dpi=300)
+    # fig.savefig(filename.replace('.pdf', '.png'), format='png', bbox_inches='tight', dpi=300)
     plt.close(fig)  # Close the figure to prevent it from displaying
 
-    print(f"ULP error plot saved as {filename}")
 
-
-def plot_approximation(approximation_funcs, xrange, golden_function=None, filename="approximation_plot.pdf", npoints=1000, plot_params={}):
+def plot_approximation(approximation_funcs, xrange, golden_function=None, filename="function-plot", npoints=1000, plot_params={}):
     """
     Plot approximations against their golden function.
 
@@ -172,7 +169,6 @@ def plot_approximation(approximation_funcs, xrange, golden_function=None, filena
 
     # Save as PDF
     fig.tight_layout()
-    fig.savefig(filename, format='pdf', bbox_inches='tight', dpi=300)
+    fig.savefig(f"{filename}.png", format='png', bbox_inches='tight', dpi=300)
+    # fig.savefig(filename, format='pdf', bbox_inches='tight', dpi=300)
     plt.close(fig)  # Close the figure to prevent it from displaying
-
-    print(f"Plot saved as {filename}")
