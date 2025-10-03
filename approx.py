@@ -1,8 +1,10 @@
 import math
 import os
+import pandas as pd
 
 from approximation import generate_approximations, GenericApproximation
 from plotting import plot_approximation, plot_approximation_ulp_error
+from measurement import measure_approximation_error
 
 
 FUNCTIONS = {
@@ -52,18 +54,24 @@ def generate_and_plots(fun_name, npoints, xrange, dtype, approx_plot_params={}, 
     all_approx_types = set([approx.type for approx in approx_functions.values()])
 
     filename = f"{fun_name}[{dtype}]"
-    plot_approximation_ulp_error(approx_functions, xrange, fun, dtype, filename=f"{output_dir}/{filename}-ulp", plot_params=ulp_error_plot_params)
-    plot_approximation(approx_functions, xrange, fun, filename=f"{output_dir}/{filename}", plot_params=approx_plot_params)
-    
+
+
+    (summary_df, detailed_df) = measure_approximation_error(fun_name, approx_functions, fun, xrange, dtype, npoints)
+
+    summary_df.to_csv(f"{output_dir}/{filename}.csv", index=False)
+
+    plot_approximation_ulp_error(detailed_df, xrange, filename=f"{output_dir}/{filename}-ulp", plot_params=ulp_error_plot_params)
+    plot_approximation(detailed_df, xrange, filename=f"{output_dir}/{filename}", plot_params=approx_plot_params)
+
     for approx_type in all_approx_types:
 
         subdir = f"{output_dir}/{approx_type}/"
         os.makedirs(subdir, exist_ok=True)
 
-        approx_functions_type = {name: approx for name, approx in approx_functions.items() if approx.type == approx_type}
+        detailed_df_type = detailed_df[detailed_df['approx_type'] == approx_type]
 
-        plot_approximation_ulp_error(approx_functions_type, xrange, fun, dtype, filename=f"{subdir}/{filename}-ulp", plot_params=ulp_error_plot_params)
-        plot_approximation(approx_functions_type, xrange, fun, filename=f"{subdir}/{filename}", plot_params=approx_plot_params)
+        plot_approximation_ulp_error(detailed_df_type, xrange, filename=f"{subdir}/{filename}-ulp", plot_params=ulp_error_plot_params)
+        plot_approximation(detailed_df_type, xrange, filename=f"{subdir}/{filename}", plot_params=approx_plot_params)
 
 
 # Example usage and testing

@@ -144,7 +144,8 @@ class Approximation:
 
     def serialize(self):
         coeff_str = ",".join([str(coeff) for coeff in self.coeff])
-        coeff_str = f"\" {self.name}(x) = {coeff_str}\""
+        coeff_str = f"\"{self.name}(x) = {coeff_str}\""
+        return coeff_str
 
 
 def generate_approximations(fun, max_poly_rank, xrange, npoints, function_name="", dtype="float32", function_derivative=None) -> dict[str, Approximation]:

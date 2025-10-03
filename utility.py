@@ -3,8 +3,6 @@ import numpy as np
 
 
 
-
-
 def ulp(x):
     x_next = torch.nextafter(x, torch.tensor([float('inf')], dtype=x.dtype))
     return x_next - x
