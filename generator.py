@@ -5,13 +5,14 @@ from utility import ulp_delta, worst_ulp_delta, compare_ulp_error
 
 
 
-def generate_poly_chebyshev(fun, poly_rank, xmin, xmax, npoints, dtype="float32"):
+def generate_polynomial_chebyshev(fun, poly_rank, xmin, xmax, npoints, dtype="float32"):
     np_dtype = getattr(np, dtype)
 
     npoints = 1000
     np_inputs = np.linspace(xmin, xmax, npoints)
     np_outputs = np.vectorize(fun)(np_inputs)
 
+    # Determine data dtype resolution
     if dtype == "float32":
         eps = 1.1920928955078125e-07
     elif dtype == "float64":
@@ -25,6 +26,8 @@ def generate_poly_chebyshev(fun, poly_rank, xmin, xmax, npoints, dtype="float32"
         rcond = eps * len(np_inputs)
 
     chebyshev_coeffs = np.polynomial.chebyshev.chebfit(np_inputs, np_outputs, poly_rank, rcond=rcond)
+
+    # Revert coefficients for consistentcy with np.polyval
     coeffs = np.flip(np.polynomial.chebyshev.cheb2poly(chebyshev_coeffs))
 
     return coeffs.astype(np_dtype).tolist()
@@ -34,7 +37,7 @@ def minimize_objective():
     pass
 
 
-
+# Polynomial approximation using scipy's minimize function
 def generate_polynomial_approx(fun, poly_rank, xmin, xmax, npoints, dtype="float32", minimize_method='BFGS', function_derivative=None):
     """
     Build a polynomial approximation of a function using least squares optimization.
@@ -53,7 +56,6 @@ def generate_polynomial_approx(fun, poly_rank, xmin, xmax, npoints, dtype="float
     # Generate uniformly spaced points in the range
     np_dtype = getattr(np, dtype)
     torch_dtype = getattr(torch, dtype)
-
 
 
     np_x_points = np.linspace(xmin, xmax, npoints)
@@ -161,7 +163,7 @@ def generate_approximations(fun, max_poly_rank, xrange, npoints, function_name="
     # Test with exponential function
     for poly_rank in range(1, max_poly_rank + 1):
         # Generate Chebyshev polynomial coefficients for given rank
-        cheby_coeffs = generate_poly_chebyshev(fun, poly_rank, xmin, xmax, npoints, dtype=dtype)
+        cheby_coeffs = generate_polynomial_chebyshev(fun, poly_rank, xmin, xmax, npoints, dtype=dtype)
         cheby_fun = Approximation(f'{function_name}-Chebyshev[{poly_rank}]', 'chebyshev', cheby_coeffs, dtype)
         functions[cheby_fun.name] = cheby_fun
 

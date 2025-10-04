@@ -2,7 +2,7 @@ import math
 import os
 import pandas as pd
 
-from approximation import generate_approximations, GenericApproximation
+from generator import generate_approximations, GenericApproximation
 from plotting import plot_approximation, plot_approximation_ulp_error
 from measurement import measure_approximation_error
 

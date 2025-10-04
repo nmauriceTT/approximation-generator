@@ -17,3 +17,12 @@ python approx.py
 On top of this, a short report with polynomial expression will be generated along with the plots. 
 
 Approximation methods include Chebyshev polynomials (np.chebyshev.chebyfit) as well as minmax approximation (scipy.optimize.minimize).
+
+
+
+# TODOs
+
+- [] Parallelize approximation generation and plotting
+- [] Run exhaustive tests and plots
+- [] Be more consistent with data type
+- [] Improve formatting of function serialization
