@@ -22,7 +22,7 @@ Approximation methods include Chebyshev polynomials (np.chebyshev.chebyfit) as w
 
 # TODOs
 
-- [] Parallelize approximation generation and plotting
-- [] Run exhaustive tests and plots
-- [] Be more consistent with data type
-- [] Improve formatting of function serialization
+- [ ] Parallelize approximation generation and plotting
+- [ ] Run exhaustive tests and plots
+- [ ] Be more consistent with data type
+- [ ] Improve formatting of function serialization
