@@ -79,7 +79,7 @@ if __name__ == "__main__":
     # Test with exponential function
     print("Testing polynomial approximation of exp(x) on [0, 1]")
     
-    npoints = 1000
+    npoints = 10000
 
     tanh_approximations = {
         "tanh-exp": GenericApproximation("tanh-exp", lambda x: (math.exp(x) - math.exp(-x)) / (math.exp(x) + math.exp(-x)), "bfloat16"),
