@@ -51,7 +51,7 @@ def plot_approximation_ulp_error(detailed_df, xrange=None, filename="ulp_error_p
     
     # Create scatter plot using seaborn
     ax = sns.scatterplot(data=df, x='x', y='ulp_error', hue='approximation',
-                        alpha=1, s=10, ax=ax)
+                        alpha=1, s=10, ax=ax, edgecolor=None)
 
     # Customize plot using ax methods
     ax.set_xlabel('Input (x)')

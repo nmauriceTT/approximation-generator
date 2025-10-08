@@ -1,7 +1,8 @@
 import torch
 import numpy as np
 import pandas as pd
-from utility import ulp_delta
+import mpmath
+from utility import ulp_delta, gen_arange_nulp_bf16
 
 
 def measure_approximation_error(function_name, approximation_funcs, golden_function, xrange, dtype, npoints=1000):
@@ -28,10 +29,14 @@ def measure_approximation_error(function_name, approximation_funcs, golden_funct
 
     # Generate x values
     xmin, xmax = xrange
-    x_values = np.linspace(xmin, xmax, npoints)
+    input_tensor = gen_arange_nulp_bf16(0, 1, ulp_step=1).to(torch_dtype)
+
+    np_input = input_tensor.to(torch.float64).numpy()
+    npoints = np_input.size
 
     # Compute golden values once
-    golden_tensor = torch.tensor([golden_function(x) for x in x_values], dtype=torch.float64)
+    np_golden_tensor = np.vectorize(golden_function)(input_tensor.to(torch.float64).numpy())
+    golden_tensor = torch.tensor(np_golden_tensor)
 
     # Prepare data structures
     summary_data = []
@@ -45,8 +50,8 @@ def measure_approximation_error(function_name, approximation_funcs, golden_funct
         'approx_name': ['golden'] * npoints,
         'approx_type': ['golden'] * npoints,
         'datatype': [dtype] * npoints,
-        'input_value': x_values,
-        'output_value': golden_tensor.numpy(),
+        'input_value': np_input,
+        'output_value': np_golden_tensor,
         'ulp_error': 0.0,
         'formula': 'golden'
     })
@@ -55,8 +60,8 @@ def measure_approximation_error(function_name, approximation_funcs, golden_funct
     for name, approx_func in approximation_funcs.items():
         # Compute approximation values
 
-        approx_values = np.vectorize(approx_func)(x_values)
-        approx_tensor = torch.tensor(approx_values, dtype=torch_dtype)
+        tensor = input_tensor.clone()
+        approx_tensor = tensor.apply_(approx_func)
 
         # Compute ULP errors for each point
         ulp_errors = ulp_delta(approx_tensor, golden_tensor).numpy()
@@ -83,8 +88,8 @@ def measure_approximation_error(function_name, approximation_funcs, golden_funct
             "approx_name": [name] * npoints,
             "approx_type": approx_func.type,
             "datatype": [dtype] * npoints,
-            "input_value": x_values,
-            "output_value": approx_values,
+            "input_value": np_input,
+            "output_value": approx_tensor.to(torch.float64).numpy(),
             "ulp_error": ulp_errors
         })
         all_results.append(results_df)

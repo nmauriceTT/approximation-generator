@@ -86,15 +86,15 @@ if __name__ == "__main__":
         "tanh-exp2": GenericApproximation("tanh-exp2", lambda x: (2**(x / math.log(2)) - 2**(-x / math.log(2))) / (2**(x / math.log(2)) + 2**(-x / math.log(2))), "bfloat16"),
     }
 
-    generate_and_plots("exp", npoints, (0, 1), "bfloat16", approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 20)})
-    generate_and_plots("atan", npoints, (-10, 10), "bfloat16", approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 40)})
+    # generate_and_plots("exp", npoints, (0, 1), "bfloat16", approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 20)})
+    # generate_and_plots("atan", npoints, (-10, 10), "bfloat16", approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 40)})
     # generate_and_plots("asin", npoints, (0, math.nextafter(1, -math.inf)), "bfloat16", approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 40)})
     generate_and_plots("exp2", npoints, (0, 1), "bfloat16", approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 10)})
     generate_and_plots("log1p", npoints, (math.nextafter(0, math.inf), 10), "bfloat16", approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 10)})
     generate_and_plots("tanh", npoints, (0, 4), "bfloat16", approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 100)}, extra_approximations=tanh_approximations)
 
-    generate_and_plots("exp", npoints, (0, 1), "float32", approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 1000)})
-    generate_and_plots("atan", npoints, (-10, 10), "float32", approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 1000)})
+    # generate_and_plots("exp", npoints, (0, 1), "float32", approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 1000)})
+    # generate_and_plots("atan", npoints, (-10, 10), "float32", approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 1000)})
     # generate_and_plots("asin", npoints, (0, math.nextafter(1, -math.inf)), "float32", approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 1000)})
     generate_and_plots("exp2", npoints, (0, 1), "float32", approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 1000)})
     generate_and_plots("log1p", npoints, (math.nextafter(0, math.inf), 10), "float32", approx_plot_params={}, ulp_error_plot_params={'ylim': (0, 1000)})
